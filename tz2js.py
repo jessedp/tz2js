@@ -4,6 +4,9 @@
 #
 # Copyright (c) 2013 Carlos (nzlosh@yahoo.com)
 #
+# 2018-07 - modified to also support python3, able to be used as a module,
+# run through pep8  - jesse
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -26,10 +29,13 @@
 # Required modules
 import os, sys, re, json, time, datetime, logging
 
-logging.basicConfig( )#level=logging.DEBUG ) # Numeric logging level for the message (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+# Numeric logging level for the message (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger()
+tzpath = ''  # os.path.join(sys.argv[1])
 
 def usage():
-    print "\nUsage: %s <path to tzdata directory>\n" % sys.argv[0]
+    print("\nUsage: %s <path to tzdata directory>\n" % sys.argv[0])
     sys.exit(1)
 
 if len(sys.argv) != 2:
@@ -452,7 +458,7 @@ def parseZoneFile():
     zone_file = os.path.join(tzpath,"zone.tab")
 
     if not os.path.exists(zone_file):
-        print "File '%s' doesn't exist" % zone_file
+        print("File '%s' doesn't exist" % zone_file)
         sys.exit(2)
 
     zones = open( zone_file, "r")
@@ -470,7 +476,7 @@ def parseZoneFile():
         # into Area and Location.
         area, location = rec[2].lower().split("/",1)
 
-        if not tmp_zones.has_key(area):
+        if area not in tmp_zones:
             tmp_zones[area] = {}
         tmp_zones[area][location] = []
 
@@ -505,7 +511,7 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
 
     rule_zone_file = os.path.join(tzpath, filename)
     if not os.path.exists(rule_zone_file):
-        print "File '%s' doesn't exist" % rule_zone_file
+        print("File '%s' doesn't exist" % rule_zone_file)
         sys.exit(2)
 
     zfh = open(rule_zone_file, "r")
@@ -562,11 +568,11 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
 
             tmpzone = TimeZone(*tmp)
 
-            if not zones.has_key(tmpzone.getArea()):
+            if tmpzone.getArea() not in zones:
                 logging.warning( "A zone area which wasn't defined has been added. %s" % tmpzone.getArea() )
                 zones[tmpzone.getArea()] = {}
 
-            if not zones[tmpzone.getArea()].has_key(tmpzone.getLocation()):
+            if tmpzone.getLocation() not in zones[tmpzone.getArea()]:
                 logging.warning( "A zone location which wasn't defined has been added. %s" % tmpzone.getLocation() )
                 zones[tmpzone.getArea()][tmpzone.getLocation()] = []
 
@@ -579,7 +585,7 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
                 tmp = list(r.groups())
                 tmp.pop(0) # discard "Rule" field.
 
-                if not rules.has_key(tmp[0]):
+                if tmp[0] not in rules:
                     rules[tmp[0]] = []
 
                 tmprule = TimeZoneRule(*tmp)
@@ -606,7 +612,7 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
                     tgt.append(None)
                 tgt_area, tgt_location = tgt
 
-                if not zones.has_key(tgt_area):
+                if tgt_area not in zones:
                     zones[tgt_area] = {}
 
                 # This doesn't handle multiple zones correctly.  Fix it?
@@ -628,8 +634,8 @@ rules = {}
 for zone_file in zone_files:
     rules.update( parseRuleZoneFile(zone_file, zones, rules) )
 
-print "zones =",json.dumps(zones, cls=jsonEncoderHelper) # , indent=4
-print "rules =",json.dumps(rules, cls=jsonEncoderHelper)
+print("zones =",json.dumps(zones, cls=jsonEncoderHelper)) # , indent=4
+print("rules =",json.dumps(rules, cls=jsonEncoderHelper))
 
 #~ for rk in rules.keys():
     #~ print "Rule [%s]" % rk
