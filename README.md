@@ -1,11 +1,15 @@
 tz2js
 =====
 
-IANA timezone database parser to native javascript data structure.
+IANA timezone database parser.
+Intended for and will produce a native javascript data structure.
 
 The javascript data structure is destined for use within an interpreter
 without disk or network access.  All script content must be contained
 within the initial file used at execution time.
+
+This can also be used as a module to return python dicts to process 
+however you'd like.
 
 References:
 http://www.iana.org/time-zones
@@ -41,20 +45,34 @@ Installation
 ============
 
   * Requirements
-    * Python 2.7
+    * Python 2.7 or Python 3
     * IANA tz data archive
 
   1 Download the IANA timezone data archive file.
-    > wget 'http://www.iana.org/time-zones/repository/releases/tzdata2012j.tar.gz'
+    > wget 'http://www.iana.org/time-zones/repository/releases/tzdb-2018e.tar.lz'
+    > new ones are released every few months
 
   2 Extract the archive to your desired directory.
-    > mkdir /tmp/tzdata2012j
+    > mkdir /tmp/tzdb-2018e
 
-    > tar xzvf tzdata2012j.tar.gz /tmp/tzdata2012j
+    > tar xzvf tzdb-2018e.tar.gz /tmp/tzdb-2018e
 
-  3 Execute tz2js.py with tzdata's parent directory as an argument.
-    > ./tz2js.py /tmp
+Usage
+============
+For js data structures, execute tz2js.py with tzdata's directory as an argument:
 
+   
+    > python tz2js.py /tmp/tzdb-2018e
+
+Or in your python code:
+```
+import tz2js
+...
+tz2js.tzpath = '/tmp/tzdb-2018e'
+data = tz2js.parseZoneFile()
+...
+
+```
 
 Thanks to ...
 =============
