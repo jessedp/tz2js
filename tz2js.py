@@ -40,21 +40,6 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger()
 tzpath = ''  # os.path.join(sys.argv[1])
 
-
-def usage():
-    print("\nUsage: %s <path to tzdata directory>\n" % sys.argv[0])
-    sys.exit(1)
-
-
-if len(sys.argv) != 2:
-    usage()
-
-tzpath = os.path.join(sys.argv[1])
-
-if not os.path.exists(tzpath):
-    logging.critical("File '%s' doesn't exist" % tzpath)
-    sys.exit(2)
-
 months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -66,17 +51,17 @@ zone_files = [
     "antarctica",
     "asia",
     "australasia",
-    #~ "backward",
+    # ~ "backward",
     "etcetera",
     "europe",
-    #~ "leapseconds",
+    # ~ "leapseconds",
     "northamerica",
     "pacificnew",
-    #~ "solar87",
-    #~ "solar88",
-    #~ "solar89",
+    # ~ "solar87",
+    # ~ "solar88",
+    # ~ "solar89",
     "southamerica",
-    #~ "systemv"
+    # ~ "systemv"
 ]
 
 
@@ -107,16 +92,14 @@ class TimeZoneBase(object):
         """
         logging.debug("Convert to seconds %s" % _time)
 
-        offset_time = 0                 # The default value for the offset is 0:0:0 GMT
+        offset_time = 0  # The default value for the offset is 0:0:0 GMT
         # The factors to apply to each value h:m:s to calculate seconds.
         time_factor = [3600, 60, 1]
-        # signed controls the factorisation of the time as positive or negitive
-        signed = 1
+        signed = 1  # signed controls the factorisation of the time as positive or negitive
 
         # Determine the number's sign
         tmp = _time.split("-", 1)
-        # A 2 subscript array means a negative digit.
-        if len(tmp) == 2:
+        if len(tmp) == 2:  # A 2 subscript array means a negative digit.
             signed = -1
             _time = tmp[1]
 
@@ -146,9 +129,9 @@ class TimeZoneRule(TimeZoneBase):
     def __init__(self, name, year_from, year_to, rule_type, month_in, day_on, time_at, save, letters):
         self.setName(name)
         self.setYearFrom(year_from)
-        self.setYearTo(year_to)         # Order matters; year_to, month_in,
-        self.setMonthIn(month_in)       # day_on are used to calculate
-        self.setDayOn(day_on)           # lastDay/firstDay entries correctly.
+        self.setYearTo(year_to)  # Order matters; year_to, month_in,
+        self.setMonthIn(month_in)  # day_on are used to calculate
+        self.setDayOn(day_on)  # lastDay/firstDay entries correctly.
         self.setTimeAt(time_at)
         self.setRuleType(rule_type)
         self.setSave(save)
@@ -189,10 +172,9 @@ class TimeZoneRule(TimeZoneBase):
         return self.year_from
 
     def setYearTo(self, year_to):
-        if year_to == "only":               # Transform TO "only" to the equivalent year as FROM
+        if year_to == "only":  # Transform TO "only" to the equivalent year as FROM
             self.year_to = self.year_from
-        # Transform TO "max" arbitrarily selected maximum year.
-        elif year_to == "max":
+        elif year_to == "max":  # Transform TO "max" arbitrarily selected maximum year.
             self.year_to = MAX_YEAR
             logging.info("%s: Set 'max' to %d" %
                          (self.__class__.__name__, MAX_YEAR))
@@ -204,7 +186,7 @@ class TimeZoneRule(TimeZoneBase):
         return self.year_to
 
     def setMonthIn(self, month_in):
-        self.month_in = months.index(month_in)+1
+        self.month_in = months.index(month_in) + 1
 
     def getMonthIn(self):
         return self.month_in
@@ -425,6 +407,16 @@ class TimeZone(TimeZoneBase):
         }
 
 
+"""
+Methods for standard usage
+"""
+
+
+def usage():
+    print(("\nUsage: %s <path to tzdata directory>\n" % sys.argv[0]))
+    sys.exit(1)
+
+
 def parseZoneFile():
     """
     Information about the file being parsed:
@@ -572,7 +564,8 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
 
         elif context.lower() == "r":
             r = re.search(
-                "^(R[^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)(.*)", line)
+                "^(R[^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)(.*)",
+                line)
             if r:
                 tmp = list(r.groups())
                 tmp.pop(0)  # discard "Rule" field.
