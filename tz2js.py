@@ -1,11 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # The MIT License (MIT)
 #
 # Copyright (c) 2013 Carlos (nzlosh@yahoo.com)
-#
-# 2018-07 - modified to also support python3, able to be used as a module,
-# run through pep8  - jesse
+# 2018-07 : python3, more pep8 compliance, make usable as module
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -35,8 +33,8 @@ import time
 import datetime
 import logging
 
-# Numeric logging level for the message (DEBUG, INFO, WARNING, ERROR, CRITICAL).
-logging.basicConfig(level=logging.DEBUG)
+# level=log.debug ) # Numeric logging level for the message (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+logging.basicConfig(level=logging.ERROR)
 log = logging.getLogger()
 tzpath = ''  # os.path.join(sys.argv[1])
 
@@ -90,7 +88,7 @@ class TimeZoneBase(object):
         Expected form for _time is "-1:33:40".
         Returns an integer representing the total number of seconds.
         """
-        logging.debug("Convert to seconds %s" % _time)
+        log.debug("Convert to seconds %s" % _time)
 
         offset_time = 0  # The default value for the offset is 0:0:0 GMT
         # The factors to apply to each value h:m:s to calculate seconds.
@@ -103,20 +101,20 @@ class TimeZoneBase(object):
             signed = -1
             _time = tmp[1]
 
-        logging.debug("Post sign treatment %s is a %s %s" %
-                      (_time, type(_time), signed))
+        log.debug("Post sign treatment %s is a %s %s" %
+                  (_time, type(_time), signed))
 
         # Calculate time in seconds.
         for x, v in enumerate(_time.split(":")):
             offset_time += int(v) * time_factor[x]
 
-        logging.debug("Post time treatment %s is a %s and %s is a %s" % (
-            offset_time, type(offset_time), signed, type(signed)))
+        log.debug(
+            "Post time treatment %s is a %s and %s is a %s" % (offset_time, type(offset_time), signed, type(signed)))
 
         # Apply sign to conversion
         # BUGFIX: negative numbers weren't managed correctly.
         res = offset_time * signed
-        logging.debug("\t == %s" % res)
+        log.debug("\t == %s" % res)
         return res
 
 
@@ -149,11 +147,11 @@ class TimeZoneRule(TimeZoneBase):
         """
         # Accept rules one year before the current year.  This allows for rules that straddle
         # start/end of year boundary.
-        if (self.year_from <= time.gmtime()[0]-1 <= self.year_to) or (self.year_from > time.gmtime()[0]-1):
-            logging.debug("%s: Period included." % self.__class__.__name__)
+        if (self.year_from <= time.gmtime()[0] - 1 <= self.year_to) or (self.year_from > time.gmtime()[0] - 1):
+            log.debug("%s: Period included." % self.__class__.__name__)
             return True
-        logging.debug("%s: Period excluded %s -> %s" %
-                      (self.__class__.__name__, self.year_from, self.year_to))
+        log.debug("%s: Period excluded %s -> %s" %
+                  (self.__class__.__name__, self.year_from, self.year_to))
         return False
 
     def setYearFrom(self, year_from):
@@ -166,7 +164,7 @@ class TimeZoneRule(TimeZoneBase):
         else:
             logging.error("%s: Unhandled format in Year From argument." %
                           self.__class__.__name__)
-            raise "Year From isn't a digit!"
+            raise Exception("Year From isn't a digit!")
 
     def getYearFrom(self):
         return self.year_from
@@ -176,8 +174,8 @@ class TimeZoneRule(TimeZoneBase):
             self.year_to = self.year_from
         elif year_to == "max":  # Transform TO "max" arbitrarily selected maximum year.
             self.year_to = MAX_YEAR
-            logging.info("%s: Set 'max' to %d" %
-                         (self.__class__.__name__, MAX_YEAR))
+            log.debug("%s: Set 'max' to %d" %
+                      (self.__class__.__name__, MAX_YEAR))
         else:
             # expect year to be a number, so it's explicitly cast to an integer
             self.year_to = int(year_to)
@@ -224,8 +222,8 @@ class TimeZoneRule(TimeZoneBase):
             except(AttributeError):
                 pass
         # confirm the format is valid then calculate the day of the month.
-        logging.debug("%s: Day On: %s, %s, %s" %
-                      (self.__class__.__name__, day, comp, dom))
+        log.debug("%s: Day On: %s, %s, %s" %
+                  (self.__class__.__name__, day, comp, dom))
         self.day_on = [day, comp, dom]
 
     def setTimeAt(self, time_at):
@@ -240,8 +238,8 @@ class TimeZoneRule(TimeZoneBase):
             special_char = time_at[-1:]
             time_at = time_at[:-1]
 
-        logging.debug("%s: Time At: %s, %s" %
-                      (self.__class__.__name__, time_at, special_char))
+        log.debug("%s: Time At: %s, %s" %
+                  (self.__class__.__name__, time_at, special_char))
         self.time_at = [time_at, special_char]
 
     def getTimeAt(self):
@@ -314,17 +312,20 @@ class TimeZone(TimeZoneBase):
         """
 
         if name.find("/") == -1:
-            logging.debug("No slash in location '%s'" % name)
-            self.area = name.lower()
+            log.debug("No slash in location '%s'" % name)
+            self.area = name
             self.location = None
         else:
-            logging.debug("Split on first slash for %s" % name)
+            log.debug("Split on first slash for %s" % name)
             self.area, self.location = name.split("/", 1)
-            self.area = self.area.lower()
-            self.location = self.location.lower()
+            self.area = self.area
+            self.location = self.location
 
     def getName(self):
-        return "%s/%s" % (self.area, self.location)
+        if self.location is None:
+            return self.area
+        else:
+            return "{}/{}".format(self.area, self.location)
 
     def getArea(self):
         return self.area
@@ -362,16 +363,16 @@ class TimeZone(TimeZoneBase):
         if len(tmp[0]) == 0:
             # Empty until field, set the date to max.
             tmp = default
-            logging.debug("*** %s: Year Until = %s" %
-                          (self.__class__.__name__, str(tmp)))
+            log.debug("*** %s: Year Until = %s" %
+                      (self.__class__.__name__, str(tmp)))
 
         if "" in tmp:
-            logging.debug("Fixed %s", str(tmp))
+            log.debug("Fixed %s", str(tmp))
             tmp.remove('')
 
         # TODO: Implement parsing for the year_until
-        if len(tmp) >= 2 and type(tmp[1]) == type(""):
-            tmp[1] = months.index(tmp[1])+1
+        if len(tmp) >= 2 and isinstance(tmp[1], str):
+            tmp[1] = months.index(tmp[1]) + 1
 
         for x, i in enumerate(tmp):
             try:
@@ -431,7 +432,7 @@ def parseZoneFile():
     4.  Comments; present if and only if the country has multiple rows.
     """
 
-    tmp_zones = {}
+    zones = {}
 
     zone_file = os.path.join(tzpath, "zone.tab")
 
@@ -439,9 +440,9 @@ def parseZoneFile():
         print("File '%s' doesn't exist" % zone_file)
         sys.exit(2)
 
-    zones = open(zone_file, "r")
+    data = open(zone_file, "r")
 
-    for line in zones.readlines():
+    for line in data.readlines():
         # Skip full line comments
         if re.search(r"^\w*#", line):
             continue
@@ -452,14 +453,22 @@ def parseZoneFile():
 
         # The only information required are Zone names.  They're split
         # into Area and Location.
-        area, location = rec[2].lower().split("/", 1)
+        area, location = rec[2].split("/", 1)
 
-        if area not in tmp_zones:
-            tmp_zones[area] = {}
-        tmp_zones[area][location] = []
+        if area not in zones:
+            zones[area] = {}
+        zones[area][location] = []
 
-    zones.close()
-    return tmp_zones
+    data.close()
+
+    rules = {}
+    for zone_file in zone_files:
+        rules.update(parseRuleZoneFile(zone_file, zones, rules))
+
+    return {
+        'zones': zones,
+        'rules': rules
+    }
 
 
 def parseRuleZoneFile(filename, zones={}, rules={}):
@@ -487,7 +496,7 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
 
     rule_zone_file = os.path.join(tzpath, filename)
     if not os.path.exists(rule_zone_file):
-        print("File '%s' doesn't exist" % rule_zone_file)
+        log.critical("File '%s' doesn't exist" % rule_zone_file)
         sys.exit(2)
 
     zfh = open(rule_zone_file, "r")
@@ -521,8 +530,8 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
 
                     # Some lines don't explicitly have the zone's location so it's set here.
                     # Location is also forced to lower case to simplfy referencing zone's keys.
-                    tmp_location = tmp[0].lower()
-                    logging.debug(
+                    tmp_location = tmp[0]
+                    log.debug(
                         "parseRuleZone: Got location as = %s" % (tmp_location))
                 else:
                     raise ValueError(
@@ -535,13 +544,13 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
                     # last explicitly mentioned zone location.
                     tmp = [tmp_location]
                     tmp.extend(list(r.groups()))
-                    logging.debug(
+                    log.debug(
                         "parseRuleZone: set location to = %s" % (tmp_location))
                 else:
                     raise ValueError(
                         "Zone doesn't match expected format %s" % line)
             else:
-                logging.debug("UNKNOWN ZONE FORMAT! %s" % line)
+                log.debug("UNKNOWN ZONE FORMAT! %s" % line)
                 continue
 
             # Strip white space from last field.
@@ -550,12 +559,12 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
             tmpzone = TimeZone(*tmp)
 
             if tmpzone.getArea() not in zones:
-                logging.warning(
+                log.debug(
                     "A zone area which wasn't defined has been added. %s" % tmpzone.getArea())
                 zones[tmpzone.getArea()] = {}
 
             if tmpzone.getLocation() not in zones[tmpzone.getArea()]:
-                logging.warning(
+                log.debug(
                     "A zone location which wasn't defined has been added. %s" % tmpzone.getLocation())
                 zones[tmpzone.getArea()][tmpzone.getLocation()] = []
 
@@ -587,12 +596,12 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
 
                 # Link  Europe/Rome Europe/Vatican  (Link SOURCE TARGET)
                 # Force to lower case to simply zone's key references.
-                src = tmp[0].lower().split("/", 1)
+                src = tmp[0].split("/", 1)
                 if len(src) == 1:
                     src.append(None)
                 src_area, src_location = src
 
-                tgt = tmp[1].lower().split("/", 1)
+                tgt = tmp[1].split("/", 1)
                 if len(tgt) == 1:
                     tgt.append(None)
                 tgt_area, tgt_location = tgt
@@ -602,7 +611,7 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
 
                 # This doesn't handle multiple zones correctly.  Fix it?
                 zones[tgt_area][tgt_location] = zones[src_area][src_location]
-                logging.debug("Linked: %s to %s" % (
+                log.debug("Linked: %s to %s" % (
                     zones[tgt_area][tgt_location], zones[src_area][src_location]))
             else:
                 raise ValueError("UNKNOWN LINK FORMAT! %s" % line)
@@ -614,14 +623,23 @@ def parseRuleZoneFile(filename, zones={}, rules={}):
     return rules
 
 
-zones = parseZoneFile()
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        usage()
 
-rules = {}
-for zone_file in zone_files:
-    rules.update(parseRuleZoneFile(zone_file, zones, rules))
+    tzpath = os.path.join(sys.argv[1])
 
-print("zones =", json.dumps(zones, cls=jsonEncoderHelper))  # , indent=4
-print("rules =", json.dumps(rules, cls=jsonEncoderHelper))
+    print(sys.argv)
+    if not os.path.exists(tzpath):
+        logging.critical("[MAIN] File '%s' doesn't exist" % tzpath)
+        sys.exit(2)
+
+    data = parseZoneFile()
+
+    # see, we can dump the data... now you do something useful with it...
+    print("zones =", json.dumps(data['zones'],
+                                cls=jsonEncoderHelper))  # , indent=4
+    print("rules =", json.dumps(data['rules'], cls=jsonEncoderHelper))
 
 # ~ for rk in rules.keys():
 # ~ print "Rule [%s]" % rk
